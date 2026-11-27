@@ -1,0 +1,21 @@
+services:
+  matterbridge:
+    image: matterbridge-keypad:local
+    build: .
+    network_mode: host
+    restart: unless-stopped
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://' + (process.env.POC_HTTP_BIND === '0.0.0.0' ? '127.0.0.1' : process.env.POC_HTTP_BIND) + ':' + process.env.POC_HTTP_PORT + '/health').then(r => { if (!r.ok) process.exitCode = 1; }).catch(() => { process.exitCode = 1; })"]
+    environment:
+      MATTERBRIDGE_LINK_LOCAL_PLUGINS: 'false'
+      POC_HTTP_BIND: ${POC_HTTP_BIND:-0.0.0.0}
+      POC_HTTP_PORT: ${POC_HTTP_PORT:-8284}
+      POC_MATTER_PORT: ${POC_MATTER_PORT:-5545}
+      POC_MDNS_INTERFACE: ${POC_MDNS_INTERFACE:-}
+    volumes:
+      - ${POC_DATA_DIR:-poc-data}:/data
+
+volumes:
+  poc-data:
+

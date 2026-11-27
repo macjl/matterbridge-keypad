@@ -1,0 +1,44 @@
+{
+  "name": "matterbridge-keypad",
+  "version": "0.2.0-alpha.1",
+  "description": "Local USB and web keypad controlling devices through Matter",
+  "type": "module",
+  "main": "index.js",
+  "keywords": [
+    "matterbridge-plugin"
+  ],
+  "engines": {
+    "node": ">=22.13.0 <23 || >=24 <25 || >=26 <27"
+  },
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "test": "node --test test/*.test.*",
+    "test:ui": "node test/ui.cjs",
+    "test:integration": "bash test/run-integration.sh",
+    "build:usb": "node scripts/build-native.mjs"
+  },
+  "author": "Jean-Laurent Girod (macjl)",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/macjl/matterbridge-keypad#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/macjl/matterbridge-keypad.git"
+  },
+  "bugs": {
+    "url": "https://github.com/macjl/matterbridge-keypad/issues"
+  },
+  "files": [
+    "*.js",
+    "native/evdev.c",
+    "native/evdev.node",
+    "apps/frontend/build/",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "CHANGELOG.md",
+    "scripts/build-native.mjs"
+  ],
+  "devDependencies": {
+    "jsdom": "27.0.1"
+  }
+}

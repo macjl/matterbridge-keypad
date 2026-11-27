@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm pack --dry-run
+  matter-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          path: matterbridge-keypad
+      - uses: actions/checkout@v7.0.1
+        with:
+          repository: macjl/matterbridge-alarm
+          path: matterbridge-alarm
+      - uses: actions/checkout@v7.0.1
+        with:
+          repository: macjl/matterbridge-audio
+          path: matterbridge-audio
+      - run: bash matterbridge-alarm/scripts/build-stack.sh
+      - run: bash matterbridge-keypad/test/run-integration.sh
+      - run: bash matterbridge-keypad/test/run-auth.sh
+      - run: AUDIO_TEST_IMAGE=matterbridge-stack:local bash matterbridge-audio/test/run-profiles.sh

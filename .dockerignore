@@ -1,0 +1,10 @@
+*
+!package.json
+!*.js
+!docker-start.sh
+!native/
+!native/evdev.c
+!apps/
+!apps/frontend/
+!apps/frontend/build/
+!apps/frontend/build/**

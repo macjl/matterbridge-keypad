@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.key
+*.tgz
+coverage/
+playwright-report/
+test-results/
+native/*.node
+.data/

@@ -1,0 +1,4 @@
+services:
+  matterbridge:
+    devices:
+      - ${KEYPAD_INPUT_DEVICE:-/dev/input/alarm-keypad}:/dev/input/alarm-keypad:r
