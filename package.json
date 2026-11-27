@@ -39,6 +39,6 @@
     "scripts/build-native.mjs"
   ],
   "devDependencies": {
-    "jsdom": "27.0.1"
+    "jsdom": "31.0.1"
   }
 }
