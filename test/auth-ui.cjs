@@ -4,7 +4,7 @@ const { join } = require('node:path');
 const { JSDOM } = require('jsdom');
 
 module.exports = (async () => {
-  for (const plugin of ['matterbridge-keypad']) {
+  for (const plugin of ['matterbridge-securitysystem-keypad']) {
     const root = join(__dirname, '../apps/frontend/build');
     const dom = new JSDOM(readFileSync(join(root, 'index.html'), 'utf8'), { runScripts: 'outside-only', url: `http://localhost/plugins/${plugin}/` });
     const w = dom.window, d = w.document, calls = [], errors = [];
@@ -24,7 +24,7 @@ module.exports = (async () => {
     assert.equal(d.querySelector('#auth-message a').getAttribute('href'), '/');
     assert.match(d.getElementById('message').textContent, /Matterbridge/);
     authenticated = true;
-    d.getElementById(plugin === 'matterbridge-keypad' ? 'reload' : 'refresh').click();
+    d.getElementById(plugin === 'matterbridge-securitysystem-keypad' ? 'reload' : 'refresh').click();
     await tick();
     assert.equal(d.getElementById('auth-message').hidden, true);
     assert.equal(calls.length, 2);

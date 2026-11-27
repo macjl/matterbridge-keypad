@@ -1,7 +1,7 @@
 #!/bin/bash
 set -Eeuo pipefail
 plugin=$(cd "$(dirname "$0")/.." && pwd)
-image=${KEYPAD_TEST_IMAGE:-matterbridge-stack:local}
+image=${KEYPAD_TEST_IMAGE:-matterbridge-securitysystem-stack:local}
 task=$(mktemp -d /tmp/mb-native-auth.XXXXXX)
 chmod 700 "$task"
 node - "$task" <<'JS'

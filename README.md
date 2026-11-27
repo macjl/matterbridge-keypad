@@ -1,8 +1,8 @@
 # Matterbridge Clavier
 
-[![CI](https://github.com/macjl/matterbridge-keypad/actions/workflows/ci.yml/badge.svg)](https://github.com/macjl/matterbridge-keypad/actions/workflows/ci.yml)
+[![CI](https://github.com/macjl/matterbridge-securitysystem-keypad/actions/workflows/ci.yml/badge.svg)](https://github.com/macjl/matterbridge-securitysystem-keypad/actions/workflows/ci.yml)
 
-**Préversion 0.2.0-alpha.1 · Apache-2.0 · Matterbridge ≥ 3.11.2 · Node.js 24 recommandé**
+**Préversion 0.2.0-alpha.2 · Apache-2.0 · Matterbridge ≥ 3.11.2 · Node.js 24 recommandé**
 
 Un pavé web et un pavé numérique USB Linux qui valident des codes locaux puis exécutent des commandes Matter. Les commandes passent directement par Matter, sans API HTTP entre plugins.
 
@@ -17,7 +17,7 @@ Un pavé web et un pavé numérique USB Linux qui valident des codes locaux puis
 
 Exemple : `+` pour Away et `-` pour Désarmer. Retour arrière corrige ; Échap efface. Les saisies web et USB sont séparées. Les codes sont salés et hachés avec scrypt, la saisie expire et le blocage après erreurs est global et persistant. Une erreur de commande arrête la suite, sans annuler les commandes déjà exécutées. Une commande On/Off réussie nécessite la confirmation de l’état reçu par abonnement.
 
-Pour commander [Alarme](https://github.com/macjl/matterbridge-alarm), envoyer Allumer à l’endpoint du mode ou à Désarmer. Autoriser le contrôleur Matterbridge Keypad dans les réglages de l’alarme s’il doit désarmer indépendamment de Maison.
+Pour commander [Alarme](https://github.com/macjl/matterbridge-securitysystem-core), envoyer Allumer à l’endpoint du mode ou à Désarmer. Autoriser le contrôleur Matterbridge Keypad dans les réglages de l’alarme s’il doit désarmer indépendamment de Maison.
 
 ## USB
 
@@ -32,18 +32,18 @@ Le clavier agit comme contrôleur ; il n’expose pas d’accessoire supplément
 ## Installation locale
 
 ```sh
-git clone https://github.com/macjl/matterbridge-keypad.git
-cd matterbridge-keypad
+git clone https://github.com/macjl/matterbridge-securitysystem-keypad.git
+cd matterbridge-securitysystem-keypad
 # Enregistrer le dossier dans une installation Matterbridge existante :
 matterbridge --add "$PWD"
 ```
 
-Le nom technique du plugin reste **`matterbridge-keypad`** pour conserver les données et identités du prototype installé. La page est `/plugins/matterbridge-keypad/` sur le serveur web Matterbridge. Se connecter à Matterbridge avant de l’ouvrir ; aucune clé supplémentaire n’est requise. Les API sont protégées par Matterbridge et une version antérieure à 3.11.2 est refusée.
+La page de configuration se trouve à `/plugins/matterbridge-securitysystem-keypad/` sur le serveur web Matterbridge. Se connecter à Matterbridge avant de l’ouvrir ; aucune clé supplémentaire n’est requise. Les API sont protégées par Matterbridge et une version antérieure à 3.11.2 est refusée.
 
 ## Docker
 
 ```sh
-docker build -t matterbridge-keypad:local .
+docker build -t matterbridge-securitysystem-keypad:local .
 docker compose up -d --no-build
 ```
 
@@ -62,6 +62,6 @@ npm pack --dry-run
 
 La CI vérifie les sources, les tests et le contenu du paquet avec Node.js 24. Matterbridge fournit ses API à l’exécution ; conformément à ses contraintes, le plugin ne déclare pas Matterbridge ou matter.js dans ses dépendances. Les tests des interfaces utilisent un contrôleur simulé ; les essais Matter réseau utilisent des conteneurs et un stockage jetables. Ils n’accèdent pas à l’installation réelle.
 
-Après construction de la pile, lancer `KEYPAD_TEST_IMAGE=matterbridge-stack:local bash test/run-integration.sh` et `KEYPAD_TEST_IMAGE=matterbridge-stack:local bash test/run-auth.sh`. Ces essais couvrent les commandes Matter, les refus d’accès et le redémarrage. Les tests simulent la lecture USB ; ils ne réservent aucun clavier physique.
+Après construction de la pile, lancer `KEYPAD_TEST_IMAGE=matterbridge-securitysystem-stack:local bash test/run-integration.sh` et `KEYPAD_TEST_IMAGE=matterbridge-securitysystem-stack:local bash test/run-auth.sh`. Ces essais couvrent les commandes Matter, les refus d’accès et le redémarrage. Les tests simulent la lecture USB ; ils ne réservent aucun clavier physique.
 
 Cette préversion sert à poursuivre les essais. Les scénarios matériels et la configuration de production restent à valider sur l’installation cible.

@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-for plugin in matterbridge-hybrid-poc matterbridge-audio-poc matterbridge-keypad; do
+for plugin in matterbridge-securitysystem-core matterbridge-securitysystem-audio matterbridge-securitysystem-keypad; do
   if [ -f "/usr/local/lib/node_modules/$plugin/package.json" ]; then
     matterbridge --docker --homedir /data --no-ansi --add "$plugin"
   fi

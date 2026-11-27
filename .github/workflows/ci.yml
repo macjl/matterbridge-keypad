@@ -27,16 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
         with:
-          path: matterbridge-keypad
+          path: matterbridge-securitysystem-keypad
       - uses: actions/checkout@v7.0.1
         with:
-          repository: macjl/matterbridge-alarm
-          path: matterbridge-alarm
+          repository: macjl/matterbridge-securitysystem-core
+          path: matterbridge-securitysystem-core
       - uses: actions/checkout@v7.0.1
         with:
-          repository: macjl/matterbridge-audio
-          path: matterbridge-audio
-      - run: bash matterbridge-alarm/scripts/build-stack.sh
-      - run: bash matterbridge-keypad/test/run-integration.sh
-      - run: bash matterbridge-keypad/test/run-auth.sh
-      - run: AUDIO_TEST_IMAGE=matterbridge-stack:local bash matterbridge-audio/test/run-profiles.sh
+          repository: macjl/matterbridge-securitysystem-audio
+          path: matterbridge-securitysystem-audio
+      - run: bash matterbridge-securitysystem-core/scripts/build-stack.sh
+      - run: bash matterbridge-securitysystem-keypad/test/run-integration.sh
+      - run: bash matterbridge-securitysystem-keypad/test/run-auth.sh
+      - run: AUDIO_TEST_IMAGE=matterbridge-securitysystem-stack:local bash matterbridge-securitysystem-audio/test/run-profiles.sh

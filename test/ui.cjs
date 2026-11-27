@@ -3,7 +3,7 @@ const { readFileSync } = require('node:fs');
 const { join } = require('node:path');
 const { JSDOM } = require('jsdom');
 const root = join(__dirname, '../apps/frontend/build');
-const dom = new JSDOM(readFileSync(join(root, 'index.html'), 'utf8'), { runScripts: 'outside-only', url: 'http://localhost/plugins/matterbridge-keypad/' });
+const dom = new JSDOM(readFileSync(join(root, 'index.html'), 'utf8'), { runScripts: 'outside-only', url: 'http://localhost/plugins/matterbridge-securitysystem-keypad/' });
 const w = dom.window, d = w.document, requests = [], errors = [];
 let fields = { prefix: '', entered: 0, busy: false, lockedUntil: 0, failures: 0, lastResult: null };
 const state = { settings: { usbEnabled: false, devicePath: '/dev/input/alarm-keypad', exclusive: true, inputSeconds: 15, maxAttempts: 5, lockSeconds: 30 },

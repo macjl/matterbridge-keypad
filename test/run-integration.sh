@@ -5,7 +5,7 @@ task=$(mktemp -d /tmp/mb-keypad-integration.XXXXXX)
 chmod 700 "$task"
 mkdir "$task/data"
 container=mb-keypad-integration
-image=${KEYPAD_TEST_IMAGE:-matterbridge-stack:local}
+image=${KEYPAD_TEST_IMAGE:-matterbridge-securitysystem-stack:local}
 cleanup() {
   sudo -n docker logs "$container" > "$task/server.log" 2>&1 || true
   sudo -n docker rm -f "$container" >/dev/null 2>&1 || true

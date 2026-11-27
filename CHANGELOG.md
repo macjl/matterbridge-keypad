@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0-alpha.2
+
+- Adoption du nom `matterbridge-securitysystem-keypad` sur GitHub, dans le paquet, dans Docker et dans l’interface de configuration.
+- Conservation des identifiants des accessoires et des contrôleurs Matter.
+
 ## 0.2.0-alpha.1 — 2026-11-27
 
 - Première préversion du projet structurée pour GitHub, à partir du prototype local 0.1.1.

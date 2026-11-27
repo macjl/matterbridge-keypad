@@ -1,6 +1,6 @@
 services:
   matterbridge:
-    image: matterbridge-keypad:local
+    image: matterbridge-securitysystem-keypad:local
     build: .
     network_mode: host
     restart: unless-stopped

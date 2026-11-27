@@ -9,7 +9,7 @@ import { createRequire } from 'node:module';
 
 const nodes = [];
 const base = 'http://127.0.0.1:46104/plugins/';
-const plugins = { keypad: 'matterbridge-keypad', alarm: 'matterbridge-hybrid-poc' };
+const plugins = { keypad: 'matterbridge-securitysystem-keypad', alarm: 'matterbridge-securitysystem-core' };
 const session = 'keypad-integration-session';
 Logger.level = LogLevel.ERROR;
 async function api(plugin, action = 'status', fields = {}) {
@@ -33,14 +33,14 @@ async function type(value, source = session) {
   return ok('keypad', 'key', { symbol: 'Enter', session: source });
 }
 try {
-  for (const plugin of ['matterbridge-hybrid-poc', 'matterbridge-audio-poc', 'matterbridge-keypad']) {
+  for (const plugin of ['matterbridge-securitysystem-core', 'matterbridge-securitysystem-audio', 'matterbridge-securitysystem-keypad']) {
     await until(async () => (await fetch(base + plugin + '/api/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status === 401, 'anonymous API blocked');
   }
   console.log('Les trois API refusent les requêtes anonymes avant la connexion Matterbridge.');
   await until(async () => (await api('keypad')).settings && (await api('alarm')).alarm, 'startup');
 
   assert.equal((await ok('keypad')).credentials.length, 0);
-  const native = createRequire(import.meta.url)('/usr/local/lib/node_modules/matterbridge-keypad/native/evdev.node');
+  const native = createRequire(import.meta.url)('/usr/local/lib/node_modules/matterbridge-securitysystem-keypad/native/evdev.node');
   assert.throws(() => native.name(-1)); assert.throws(() => native.grab(-1, true));
   Environment.default.vars.set('path.root', mkdtempSync('/tmp/keypad-home-'));
   const home = await ServerNode.create(ServerNode.RootEndpointWithoutGroupcast.with(ControllerBehavior), {

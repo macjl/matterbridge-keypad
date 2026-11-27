@@ -1,6 +1,6 @@
 {
-  "name": "matterbridge-keypad",
-  "version": "0.2.0-alpha.1",
+  "name": "matterbridge-securitysystem-keypad",
+  "version": "0.2.0-alpha.2",
   "description": "Local USB and web keypad controlling devices through Matter",
   "type": "module",
   "main": "index.js",
@@ -19,13 +19,13 @@
   },
   "author": "Jean-Laurent Girod (macjl)",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/macjl/matterbridge-keypad#readme",
+  "homepage": "https://github.com/macjl/matterbridge-securitysystem-keypad#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/macjl/matterbridge-keypad.git"
+    "url": "git+https://github.com/macjl/matterbridge-securitysystem-keypad.git"
   },
   "bugs": {
-    "url": "https://github.com/macjl/matterbridge-keypad/issues"
+    "url": "https://github.com/macjl/matterbridge-securitysystem-keypad/issues"
   },
   "files": [
     "*.js",

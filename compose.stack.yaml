@@ -1,3 +1,3 @@
 services:
   matterbridge:
-    image: matterbridge-stack:local
+    image: matterbridge-securitysystem-stack:local
