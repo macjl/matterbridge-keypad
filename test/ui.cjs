@@ -10,6 +10,7 @@ const state = { settings: { usbEnabled: false, devicePath: '/dev/input/alarm-key
   credentials: [], routes: [], history: [], input: fields, usb: { enabled: false, connected: false }, controller: { label: 'Matterbridge Keypad' },
   peers: [{ id: 'bridge', label: 'Pont', connected: true, endpoints: [{ number: 21, label: 'Away', commands: [{ id: 'on', label: 'Allumer' }, { id: 'brightness', label: 'Luminosité', min: 0, max: 100 }] },
     { number: 15, label: 'Audio', commands: [{ id: 'profile', label: 'Profil', choices: [{ value: 'prealarm', label: 'Préalarme' }] }] }] }] };
+Object.defineProperty(w.navigator, 'languages', { value: ['fr-FR'] });
 w.setInterval = (callback) => { w.poll = callback; }; w.confirm = () => true;
 w.fetch = async (url, options) => {
   const body = JSON.parse(options.body); requests.push({ url, body }); await new Promise((resolve) => setTimeout(resolve, 1));
@@ -28,6 +29,7 @@ w.fetch = async (url, options) => {
   return { ok: true, json: async () => w.JSON.parse(JSON.stringify(state)) };
 };
 w.addEventListener('error', (e) => errors.push(e.error));
+w.eval(readFileSync(join(root, 'locale.js'), 'utf8'));
 w.eval(readFileSync(join(root, 'ui.js'), 'utf8'));
 w.eval(readFileSync(join(root, 'app.js'), 'utf8'));
 const tick = (ms = 15) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -36,6 +38,8 @@ module.exports = (async () => {
   assert.equal(d.getElementById('key'), null); assert.equal(d.getElementById('access'), null);
   assert.ok(requests.every((r) => !Object.hasOwn(r.body, 'key')));
   assert.equal(d.getElementById('controls').hidden, false);
+  assert.equal(d.documentElement.lang, 'fr');
+  assert.equal(d.getElementById('tab-routes').textContent, 'Séquences');
   const cf = d.getElementById('credential-form');
   cf.elements.name.value = 'Famille'; cf.elements.pin.value = '001234'; cf.requestSubmit(); await tick();
   assert.equal(requests.at(-1).body.pin, '001234'); assert.equal(cf.elements.pin.value, '');

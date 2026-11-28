@@ -1,3 +1,4 @@
+const { t, serverText, profileName, language } = window.PluginUI;
 const $ = (id) => document.getElementById(id);
 const credentialForm = $('credential-form'), routeForm = $('route-form'), settingsForm = $('settings-form');
 const bytes = new Uint8Array(16); crypto.getRandomValues(bytes);
@@ -10,9 +11,9 @@ async function api(action, fields = {}) {
     body: JSON.stringify({ session, ...fields }),
   });
   $('auth-message').hidden = response.status !== 401;
-  if (response.status === 401) throw new Error('Connexion à Matterbridge requise.');
+  if (response.status === 401) throw new Error(t("Sign-in to Matterbridge is required."));
   const data = await response.json();
-  if (!response.ok || data.error) throw new Error(data.error || 'Le plugin est indisponible.');
+  if (!response.ok || data.error) throw new Error(serverText(data.error) || t("The plugin is unavailable."));
   return data;
 }
 function enqueue(work) {
@@ -40,36 +41,36 @@ function row(label, buttons) {
   item.append(text, ...buttons); return item;
 }
 function render(data, configuration = false) {
-  current = data; $('controls').hidden = false; $('connection').textContent = 'Connecté';
-  $('selection').textContent = data.input.route || (data.input.prefix ? `Préfixe ${data.input.prefix} : aucune séquence active` : 'Choisis une séquence.');
+  current = data; $('controls').hidden = false; $('connection').textContent = t("Connected");
+  $('selection').textContent = data.input.route || (data.input.prefix ? t("No enabled sequence for prefix {0}", data.input.prefix) : t("Select a sequence."));
   $('digits').textContent = data.input.entered ? '•'.repeat(data.input.entered) : '—';
   const lock = Math.max(0, Math.ceil((data.input.lockedUntil - Date.now()) / 1000));
-  $('input-state').textContent = lock ? `Clavier bloqué : ${lock} s` : data.input.busy ? 'Commande en cours…' : data.input.lastResult?.message || '';
+  $('input-state').textContent = lock ? t("Keypad locked for {0} s", lock) : data.input.busy ? t("Running command…") : serverText(data.input.lastResult?.message) || '';
   $('shortcuts').replaceChildren(...data.routes.filter((r) => r.enabled).map((r) => button(`${r.prefix} · ${r.name}`, () => enqueue(async () => {
     let result = await api('clear');
     for (const symbol of r.prefix) result = await api('key', { symbol });
     render(result); $('message').textContent = '';
   }), !!lock || data.input.busy)));
   for (const key of document.querySelectorAll('[data-key]')) key.disabled = !!lock || data.input.busy;
-  $('usb-state').textContent = !data.usb.enabled ? 'Pavé USB désactivé.' : data.usb.connected ? `USB connecté : ${data.usb.name}` : `USB en attente : ${data.usb.error || 'recherche du périphérique'}`;
-  $('controller-state').textContent = `${data.peers.filter((p) => p.connected).length} appareil(s) Matter connecté(s). Contrôleur : ${data.controller.label}.`;
+  $('usb-state').textContent = !data.usb.enabled ? t("USB keypad disabled.") : data.usb.connected ? t("USB connected · {0}", data.usb.name) : t("Waiting for USB · {0}", serverText(data.usb.error) || t("looking for the device"));
+  $('controller-state').textContent = t("Connected Matter devices: {0}. Controller: {1}.", data.peers.filter((p) => p.connected).length, data.controller.label);
   $('history').replaceChildren(...data.history.map((event) => {
-    const item = document.createElement('li'); item.textContent = `${new Date(event.at).toLocaleString()} · ${event.source} · ${event.message}`; return item;
+    const item = document.createElement('li'); item.textContent = `${new Date(event.at).toLocaleString(language)} · ${serverText(event.source)} · ${serverText(event.message)}`; return item;
   }));
-  $('credentials').replaceChildren(...data.credentials.map((c) => row(`${c.name} · ${c.enabled ? 'actif' : 'désactivé'}`, [
-    button('Modifier', () => editCredential(c)), button('Supprimer', () => {
-      if (confirm(`Supprimer le code « ${c.name} » ?`)) request('remove-credential', { id: c.id }, () => { if (credentialId === c.id) editCredential(); renderCodeChoices(); });
+  $('credentials').replaceChildren(...data.credentials.map((c) => row(`${c.name} · ${c.enabled ? t("enabled") : t("disabled")}`, [
+    button(t("Edit"), () => editCredential(c)), button(t("Delete"), () => {
+      if (confirm(t("Delete PIN “{0}”?", c.name))) request('remove-credential', { id: c.id }, () => { if (credentialId === c.id) editCredential(); renderCodeChoices(); });
     }),
   ])));
-  $('routes').replaceChildren(...data.routes.map((r) => row(`${r.prefix} · ${r.name} · ${r.enabled ? 'active' : 'désactivée'} · ${r.operations.length} commande(s)`, [
-    button('Modifier', () => editRoute(r)), button('Supprimer', () => {
-      if (confirm(`Supprimer la séquence « ${r.name} » ?`)) request('remove-route', { id: r.id }, () => { if (routeId === r.id) editRoute(); });
+  $('routes').replaceChildren(...data.routes.map((r) => row(t("{0} · {1} · {2} · Commands: {3}", r.prefix, r.name, r.enabled ? t("enabled") : t("disabled"), r.operations.length), [
+    button(t("Edit"), () => editRoute(r)), button(t("Delete"), () => {
+      if (confirm(t("Delete sequence “{0}”?", r.name))) request('remove-route', { id: r.id }, () => { if (routeId === r.id) editRoute(); });
     }),
   ])));
-  $('peers').replaceChildren(...data.peers.map((p) => row(`${p.label} · ${p.connected ? 'connecté' : 'hors ligne'} · ${p.endpoints.length} commande(s) disponible(s)`, [
-    button('Retirer', () => { if (confirm(`Retirer « ${p.label} » de ce contrôleur ?`)) request('remove-device', { peer: p.id }); }),
+  $('peers').replaceChildren(...data.peers.map((p) => row(t("{0} · {1} · Available commands: {2}", p.label, p.connected ? t("connected") : t("offline"), p.endpoints.length), [
+    button(t("Remove"), () => { if (confirm(t("Remove “{0}” from this controller?", p.label))) request('remove-device', { peer: p.id }); }),
   ])));
-  for (const [id, text] of [['credentials', 'Aucun code autorisé. Créer un code avant d’utiliser une séquence.'], ['routes', 'Aucune séquence. Associer un préfixe à des commandes Matter.'], ['peers', 'Aucun appareil associé à ce clavier.'], ['history', 'Aucune commande enregistrée.']]) window.PluginUI?.empty(id, text);
+  for (const [id, text] of [['credentials', t("No authorized PINs. Create a PIN before using a sequence.")], ['routes', t("No sequences yet. Link a prefix to Matter commands.")], ['peers', t("No devices paired with this keypad.")], ['history', t("No commands recorded.")]]) window.PluginUI?.empty(id, text);
   if (configuration) {
     for (const [name, value] of Object.entries(data.settings)) {
       const field = settingsForm.elements.namedItem(name); if (!field) continue;
@@ -81,9 +82,9 @@ function render(data, configuration = false) {
 function editCredential(credential) {
   if (credential) credentialForm.closest('details').open = true;
   credentialId = credential?.id; credentialForm.reset();
-  $('credential-title').textContent = credential ? `Modifier ${credential.name}` : 'Nouveau code';
+  $('credential-title').textContent = credential ? t("Edit {0}", credential.name) : t("New PIN");
   credentialForm.elements.pin.required = !credential;
-  credentialForm.elements.pin.placeholder = credential ? 'Laisser vide pour conserver le code' : '4 à 12 chiffres';
+  credentialForm.elements.pin.placeholder = credential ? t("Leave blank to keep the PIN") : t("4 to 12 digits");
   if (credential) { credentialForm.elements.name.value = credential.name; credentialForm.elements.enabled.checked = credential.enabled; }
 }
 function renderCodeChoices(selected) {
@@ -91,7 +92,7 @@ function renderCodeChoices(selected) {
   $('route-codes').replaceChildren(...(current?.credentials ?? []).map((c) => {
     const label = document.createElement('label'); label.className = 'check';
     const input = document.createElement('input'); input.type = 'checkbox'; input.value = c.id; input.checked = previous.includes(c.id);
-    label.append(input, document.createTextNode(c.name + (c.enabled ? '' : ' (désactivé)'))); return label;
+    label.append(input, document.createTextNode(c.name + (c.enabled ? '' : t(" (disabled)")))); return label;
   }));
   $('route-codes').hidden = $('all-codes').checked;
 }
@@ -100,16 +101,16 @@ function endpoints() {
 }
 function operationRow(saved) {
   const item = document.createElement('div'); item.className = 'operation';
-  const target = document.createElement('select'); target.setAttribute('aria-label', 'Accessoire');
-  const command = document.createElement('select'); command.setAttribute('aria-label', 'Commande');
+  const target = document.createElement('select'); target.setAttribute('aria-label', t("Accessory"));
+  const command = document.createElement('select'); command.setAttribute('aria-label', t("Command"));
   let value = document.createElement('input');
   const targets = endpoints();
-  target.append(new Option('Choisir un accessoire', ''));
+  target.append(new Option(t("Select an accessory"), ''));
   for (const part of targets) target.append(new Option(part.title, `${part.peer}:${part.number}`));
   let fallback;
   if (saved && !targets.some((p) => p.peer === saved.peer && p.number === saved.endpoint)) {
     fallback = { peer: saved.peer, number: saved.endpoint, commands: [{ id: saved.command, label: saved.command, ...(saved.command === 'profile' ? { choices: [{ value: saved.value, label: saved.valueLabel || saved.value }] } : {}) }] };
-    target.append(new Option((saved.label || saved.peer) + ' (indisponible)', `${saved.peer}:${saved.endpoint}`));
+    target.append(new Option((saved.label || saved.peer) + t(" (unavailable)"), `${saved.peer}:${saved.endpoint}`));
   }
   const part = () => targets.find((p) => `${p.peer}:${p.number}` === target.value) || (target.value ? fallback : undefined);
   function drawValue(initial) {
@@ -117,8 +118,8 @@ function operationRow(saved) {
     let replacement;
     if (capability?.choices) {
       replacement = document.createElement('select');
-      for (const choice of capability.choices) replacement.append(new Option(choice.label, choice.value));
-      if (initial !== undefined && !capability.choices.some((c) => c.value === initial)) replacement.append(new Option((saved?.valueLabel || initial) + ' (indisponible)', initial));
+      for (const choice of capability.choices) replacement.append(new Option(profileName(choice.value, choice.label), choice.value));
+      if (initial !== undefined && !capability.choices.some((c) => c.value === initial)) replacement.append(new Option((saved?.valueLabel || initial) + t(" (unavailable)"), initial));
       replacement.required = true;
     } else {
       replacement = document.createElement('input');
@@ -126,27 +127,27 @@ function operationRow(saved) {
       else if (['brightness', 'volume', 'temperature'].includes(command.value)) {
         replacement.type = 'number'; replacement.min = capability?.min ?? (command.value === 'temperature' ? 1000 : 0);
         replacement.max = capability?.max ?? (command.value === 'temperature' ? 20000 : 100); replacement.required = true;
-      } else { replacement.type = 'text'; replacement.disabled = true; replacement.placeholder = 'Sans valeur'; }
+      } else { replacement.type = 'text'; replacement.disabled = true; replacement.placeholder = t("No value"); }
     }
-    replacement.setAttribute('aria-label', 'Valeur');
+    replacement.setAttribute('aria-label', t("Value"));
     if (initial !== undefined) replacement.value = initial;
     else if (replacement.type === 'color') replacement.value = '#ffffff';
     else if (replacement.type === 'number') replacement.value = command.value === 'temperature' ? '3000' : '100';
     value.replaceWith(replacement); value = replacement;
   }
   function drawCommands(initial) {
-    command.replaceChildren(...(part()?.commands ?? []).map((c) => new Option(c.label, c.id)));
-    if (initial && !Array.from(command.options).some((o) => o.value === initial)) command.append(new Option(initial + ' (indisponible)', initial));
+    command.replaceChildren(...(part()?.commands ?? []).map((c) => new Option(serverText(c.label), c.id)));
+    if (initial && !Array.from(command.options).some((o) => o.value === initial)) command.append(new Option(initial + t(" (unavailable)"), initial));
     if (initial) command.value = initial;
     drawValue(initial === saved?.command ? saved?.value : undefined);
   }
   target.required = command.required = true;
-  item.append(target, command, value, button('Retirer', () => item.remove()));
+  item.append(target, command, value, button(t("Remove"), () => item.remove()));
   target.addEventListener('change', () => drawCommands()); command.addEventListener('change', () => drawValue());
   if (saved) target.value = `${saved.peer}:${saved.endpoint}`;
   drawCommands(saved?.command);
   item.operation = () => {
-    const selected = part(); if (!selected || !command.value) throw new Error('Choisis un accessoire et une commande.');
+    const selected = part(); if (!selected || !command.value) throw new Error(t("Choose an accessory and a command."));
     return { peer: selected.peer, endpoint: selected.number, command: command.value,
       ...(['brightness', 'volume', 'temperature'].includes(command.value) ? { value: Number(value.value) }
         : ['color', 'profile'].includes(command.value) ? { value: value.value } : {}) };
@@ -155,7 +156,7 @@ function operationRow(saved) {
 }
 function editRoute(route) {
   if (route) routeForm.closest('details').open = true;
-  routeId = route?.id; routeForm.reset(); $('route-title').textContent = route ? `Modifier ${route.name}` : 'Nouvelle séquence';
+  routeId = route?.id; routeForm.reset(); $('route-title').textContent = route ? t("Edit {0}", route.name) : t("New sequence");
   if (route) {
     routeForm.elements.name.value = route.name; routeForm.elements.prefix.value = route.prefix; routeForm.elements.enabled.checked = route.enabled;
     $('all-codes').checked = route.credentialIds === null;
@@ -201,7 +202,7 @@ setInterval(async () => {
   if (!opened || pending) return;
   pending++;
   try { render(await api('status')); }
-  catch (error) { $('message').textContent = error.message; $('connection').textContent = 'Connexion perdue'; }
+  catch (error) { $('message').textContent = error.message; $('connection').textContent = t("Connection lost"); }
   finally { pending--; }
 }, 2000);
 void load();

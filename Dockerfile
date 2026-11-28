@@ -1,4 +1,4 @@
-ARG MATTERBRIDGE_BASE_IMAGE=luligu/matterbridge:3.11.2
+ARG MATTERBRIDGE_BASE_IMAGE=luligu/matterbridge:3.11.5
 FROM ${MATTERBRIDGE_BASE_IMAGE} AS native-build
 RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev linux-libc-dev && rm -rf /var/lib/apt/lists/*
 COPY native/evdev.c /tmp/evdev.c

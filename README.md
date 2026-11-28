@@ -1,44 +1,44 @@
-# Matterbridge Clavier
+# Matterbridge Keypad
 
 [![CI](https://github.com/macjl/matterbridge-securitysystem-keypad/actions/workflows/ci.yml/badge.svg)](https://github.com/macjl/matterbridge-securitysystem-keypad/actions/workflows/ci.yml)
 
-**Préversion 0.2.0-alpha.2 · Apache-2.0 · Matterbridge ≥ 3.11.2 · Node.js 24 recommandé**
+**Preview 0.2.0-alpha.2 · Apache-2.0 · Matterbridge ≥ 3.11.2 · Node.js 24 recommended**
 
-Un pavé web et un pavé numérique USB Linux qui valident des codes locaux puis exécutent des commandes Matter. Les commandes passent directement par Matter, sans API HTTP entre plugins.
+A web keypad and optional Linux USB keypad that authorize local PINs and send Matter commands directly to paired devices.
 
-![Interface de configuration](docs/images/overview.png)
+![Keypad configuration](docs/images/overview.png)
 
-## Fonctionnement
+## How it works
 
-1. Partager les appareils à commander au contrôleur du clavier depuis leur contrôleur existant.
-2. Créer des codes nommés de 4 à 12 chiffres, y compris les zéros initiaux. Aucun PIN n’est créé par défaut.
-3. Créer des séquences : préfixe unique de 1 à 4 symboles parmi `+ - * / .`, codes autorisés et commandes à exécuter dans l’ordre.
-4. Saisir **préfixe → code → Entrée**, ou choisir la séquence dans le pavé web puis saisir le code.
+1. Share the devices to be controlled with the Keypad controller from their existing Matter controller.
+2. Create named PINs with 4 to 12 digits. Leading zeros are allowed.
+3. Create sequences with a unique prefix of 1 to 4 symbols from `+ - * / .`, authorized PINs, and commands in execution order.
+4. Enter **prefix → PIN → Enter**, or select a sequence in the web keypad and then enter the PIN.
 
-Exemple : `+` pour Away et `-` pour Désarmer. Retour arrière corrige ; Échap efface. Les saisies web et USB sont séparées. Les codes sont salés et hachés avec scrypt, la saisie expire et le blocage après erreurs est global et persistant. Une erreur de commande arrête la suite, sans annuler les commandes déjà exécutées. Une commande On/Off réussie nécessite la confirmation de l’état reçu par abonnement.
+For example, use `+` for Away and `-` for Disarm. Backspace corrects a digit and Escape clears the entry. Web and USB entries are independent. The plugin salts and hashes PINs with scrypt. Entries expire, and failed attempts contribute to a shared lockout that survives restarts. A command error stops the sequence at that command. An On/Off command succeeds after the subscribed state confirms the requested value.
 
-Pour commander [Alarme](https://github.com/macjl/matterbridge-securitysystem-core), envoyer Allumer à l’endpoint du mode ou à Désarmer. Autoriser le contrôleur Matterbridge Keypad dans les réglages de l’alarme s’il doit désarmer indépendamment de Maison.
+To control [Alarm](https://github.com/macjl/matterbridge-securitysystem-core), send **Turn on** to a mode endpoint or to Disarm. Authorize Matterbridge Keypad in the Alarm settings to let it disarm independently of Apple Home.
 
-## USB
+## USB keypad
 
-L’entrée USB est optionnelle et désactivée par défaut. Sur Linux, compiler le module evdev avec `npm run build:usb` (compilateur C, en-têtes Node.js et Linux nécessaires). L’image Docker le compile automatiquement pour son architecture.
+USB input is optional. On Linux, build the evdev module with `npm run build:usb` using a C compiler and the Node.js and Linux headers. The Docker image builds the module for its architecture.
 
-Transmettre uniquement un pavé dédié, par exemple avec `--device /dev/input/by-id/IDENTIFIANT-event-kbd:/dev/input/alarm-keypad:r`. Dans l’interface, activer l’USB et sélectionner `/dev/input/alarm-keypad`. Le mode exclusif réserve ce périphérique au plugin. Ne pas utiliser le clavier principal de la machine.
+Pass a dedicated keypad using a mapping such as `--device /dev/input/by-id/DEVICE-event-kbd:/dev/input/alarm-keypad:r`. In **Settings**, enable USB input and choose `/dev/input/alarm-keypad`. Exclusive mode reserves the device for the plugin.
 
-Le lecteur gère les formats Linux 32/64 bits, ignore les répétitions et efface la saisie après une perte de synchronisation ou déconnexion. Un périphérique absent n’empêche pas le pavé web de fonctionner. Un débranchement/rebranchement peut nécessiter de recréer le conteneur pour actualiser la transmission du périphérique.
+The reader supports 32-bit and 64-bit Linux evdev records, ignores held-key repeats, and clears input after disconnect or loss of synchronization. The web keypad remains available when the USB device is absent. Reconnecting USB may require recreating the container so Docker can pass through the new device node. Physical testing with a dedicated USB keypad is still pending.
 
-Le clavier agit comme contrôleur ; il n’expose pas d’accessoire supplémentaire et n’utilise pas le cluster multimédia Keypad Input. La validation USB physique reste à effectuer avec le pavé dédié.
 
-## Installation locale
+## Local installation
 
 ```sh
 git clone https://github.com/macjl/matterbridge-securitysystem-keypad.git
 cd matterbridge-securitysystem-keypad
-# Enregistrer le dossier dans une installation Matterbridge existante :
+# Register the checkout with an existing Matterbridge installation.
 matterbridge --add "$PWD"
 ```
 
-La page de configuration se trouve à `/plugins/matterbridge-securitysystem-keypad/` sur le serveur web Matterbridge. Se connecter à Matterbridge avant de l’ouvrir ; aucune clé supplémentaire n’est requise. Les API sont protégées par Matterbridge et une version antérieure à 3.11.2 est refusée.
+Sign in to Matterbridge and open `/plugins/matterbridge-securitysystem-keypad/`. The web interface follows the browser’s preferred supported language, with English as the fallback. Matterbridge 3.11.2 or later provides authentication for the plugin API.
+
 
 ## Docker
 
@@ -47,11 +47,12 @@ docker build -t matterbridge-securitysystem-keypad:local .
 docker compose up -d --no-build
 ```
 
-L’image est basée sur Matterbridge 3.11.2 et utilise un volume `/data`. Ne pas supprimer ce volume : il contient notamment les jumelages. HTTP écoute sur 8284 et Matter sur UDP 5545 par défaut. `POC_HTTP_BIND`, `POC_HTTP_PORT`, `POC_MATTER_PORT`, `POC_MDNS_INTERFACE` et `POC_DATA_DIR` restent les paramètres de déploiement compatibles avec le prototype.
+The image uses Matterbridge 3.11.5 and stores configuration and pairings in `/data`. Keep that volume when replacing or rebuilding the container. HTTP defaults to port 8284 and Matter to UDP port 5545. Deployment parameters are `POC_HTTP_BIND`, `POC_HTTP_PORT`, `POC_MATTER_PORT`, `POC_MDNS_INTERFACE`, and `POC_DATA_DIR`.
 
-Pour réunir les trois plugins dans un conteneur, cloner les trois dépôts côte à côte et utiliser `scripts/build-stack.sh` du dépôt Alarme, puis les overrides `compose.stack.yaml` des dépôts Audio et Clavier. Chaque plugin fonctionne aussi seul. Les images ne contiennent ni code PIN, ni clé privée, ni configuration personnelle.
+To run all three plugins together, clone the repositories side by side. Run `scripts/build-stack.sh` from the Alarm repository and apply the Audio and Keypad `compose.stack.yaml` overrides. Each plugin also runs independently.
 
-## Développement et validation
+
+## Development and validation
 
 ```sh
 npm ci
@@ -60,8 +61,6 @@ npm test
 npm pack --dry-run
 ```
 
-La CI vérifie les sources, les tests et le contenu du paquet avec Node.js 24. Matterbridge fournit ses API à l’exécution ; conformément à ses contraintes, le plugin ne déclare pas Matterbridge ou matter.js dans ses dépendances. Les tests des interfaces utilisent un contrôleur simulé ; les essais Matter réseau utilisent des conteneurs et un stockage jetables. Ils n’accèdent pas à l’installation réelle.
+CI checks the source, tests, and package on Node.js 24. Matterbridge supplies the Matter APIs at runtime. UI tests use simulated controllers, and network integration tests use disposable containers and storage.
 
-Après construction de la pile, lancer `KEYPAD_TEST_IMAGE=matterbridge-securitysystem-stack:local bash test/run-integration.sh` et `KEYPAD_TEST_IMAGE=matterbridge-securitysystem-stack:local bash test/run-auth.sh`. Ces essais couvrent les commandes Matter, les refus d’accès et le redémarrage. Les tests simulent la lecture USB ; ils ne réservent aucun clavier physique.
-
-Cette préversion sert à poursuivre les essais. Les scénarios matériels et la configuration de production restent à valider sur l’installation cible.
+With the full stack image built, run `KEYPAD_TEST_IMAGE=matterbridge-securitysystem-stack:local bash test/run-integration.sh` and `KEYPAD_TEST_IMAGE=matterbridge-securitysystem-stack:local bash test/run-auth.sh`. USB tests use simulated input.

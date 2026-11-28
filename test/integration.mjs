@@ -61,9 +61,19 @@ try {
   await ok('keypad', 'pair-device', { code: (await lamp.openEnhancedCommissioningWindow()).manualPairingCode });
   const sensor = await until(async () => (await ok('alarm')).peers.find((p) => p.connected), 'alarm subscription');
   const controlled = await until(async () => (await ok('keypad')).peers.find((p) => p.connected && p.id !== self.id), 'generic lamp subscription');
-  const zone = (await ok('alarm', 'zone', { name: 'RDC' })).alarm.zones.at(-1);
-  await ok('alarm', 'rule', { name: 'Lumière détectée', zoneIds: [zone.id], peer: sensor.id, endpoint: 1, signal: 'power', trigger: 'active' });
-  const mode = (await ok('alarm', 'mode', { name: 'Away', zones: [zone.id], activationSeconds: 0, triggerSeconds: 1, alarmSeconds: 0, actions: {} })).alarm.modes.at(-1);
+  const usesScenarios = (await ok('alarm')).alarm.version >= 3;
+  const rule = { name: 'Lumière détectée', peer: sensor.id, endpoint: 1, signal: 'power', trigger: 'active' };
+  let zone;
+  if (usesScenarios) {
+    const { id } = (await ok('alarm', 'rule', rule)).alarm.rules.at(-1);
+    zone = (await ok('alarm', 'zone', { name: 'RDC', ruleIds: [id] })).alarm.zones.at(-1);
+  } else {
+    zone = (await ok('alarm', 'zone', { name: 'RDC' })).alarm.zones.at(-1);
+    await ok('alarm', 'rule', { ...rule, zoneIds: [zone.id] });
+  }
+  const mode = (await ok('alarm', 'mode', {
+    name: 'Away', zones: [zone.id], activationSeconds: 0, triggerSeconds: 1, alarmSeconds: 0,
+  })).alarm.modes.at(-1);
   let alarm = await ok('alarm');
   const modeEndpoint = alarm.accessories.modes.switches.find((s) => s.modeId === mode.id).endpoint;
   const disarmEndpoint = alarm.accessories.modes.endpoint;
@@ -100,6 +110,26 @@ try {
   console.log('PIN → Matter → armement/désarmement validés ; Maison reste interdite et le code invité ne désarme pas.');
   assert.equal((await type('*778899')).result.outcome, 'success'); assert.equal(lamp.endpoints.find((e) => e.number === 1).stateOf(OnOffClient).onOff, true);
   assert.equal((await type('/004281')).result.outcome, 'success'); assert.equal(lamp.endpoints.find((e) => e.number === 1).stateOf(OnOffClient).onOff, false);
+  if (usesScenarios) {
+    const action = (await ok('alarm', 'action', {
+      name: 'Éteindre la lampe', operations: [{ peer: sensor.id, endpoint: 1, command: 'off' }],
+    })).alarm.actions.at(-1);
+    const scenario = (await ok('alarm', 'scenario', {
+      name: 'Réaction à l’alerte', actionIds: [action.id],
+    })).alarm.scenarios.at(-1);
+    await ok('alarm', 'mode', { ...mode, scenarios: { triggered: [scenario.id] } });
+    assert.equal((await type('+004281')).result.outcome, 'success');
+    assert.equal((await type('*778899')).result.outcome, 'success');
+    const alert = await until(async () => {
+      const { alarm: record } = await ok('alarm');
+      return record.state.phase === 'triggered' && record.pendingActions.length === 0 && record;
+    }, 'scenario executed');
+    assert.deepEqual(alert.state.zoneIds, [zone.id]);
+    assert.match(alert.state.cause, /RDC · Lumière détectée/);
+    assert.equal(lamp.endpoints.find((e) => e.number === 1).stateOf(OnOffClient).onOff, false);
+    assert.equal((await type('-004281')).result.outcome, 'success');
+    console.log('Déclencheur Matter → zone → scénario du mode → commande Matter validés.');
+  }
   assert.match((await api('keypad', 'remove-credential', { id: family.id })).error, /Retire/);
   assert.match((await api('keypad', 'route', { name: 'Double', prefix: '+', enabled: true, credentialIds: null, operations: [{ peer: controlled.id, endpoint: 1, command: 'on' }] })).error, /utilisée/);
   console.log('Plugin indépendant : une lampe Matter commandée par deux codes et deux séquences ; aucune API d’alarme utilisée pour les commandes.');

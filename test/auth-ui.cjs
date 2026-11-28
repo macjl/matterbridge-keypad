@@ -15,12 +15,17 @@ module.exports = (async () => {
       return { status: authenticated ? 200 : 401, ok: authenticated, json: async () => ({ error: authenticated ? 'Réponse de test' : 'Unauthorized' }) };
     };
     w.addEventListener('error', (event) => errors.push(event.error));
+    Object.defineProperty(w.navigator, 'languages', { value: ['de-DE'] });
+    w.eval(readFileSync(join(root, 'locale.js'), 'utf8'));
+    w.eval(readFileSync(join(root, 'ui.js'), 'utf8'));
     w.eval(readFileSync(join(root, 'app.js'), 'utf8'));
     const tick = () => new Promise((resolve) => setTimeout(resolve, 10));
     await tick();
     assert.equal(d.getElementById('key'), null);
     assert.equal(d.getElementById('access'), null);
     assert.equal(d.getElementById('auth-message').hidden, false);
+    assert.equal(d.documentElement.lang, 'en');
+    assert.equal(d.getElementById('tab-routes').textContent, 'Sequences');
     assert.equal(d.querySelector('#auth-message a').getAttribute('href'), '/');
     assert.match(d.getElementById('message').textContent, /Matterbridge/);
     authenticated = true;
